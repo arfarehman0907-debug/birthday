@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surprises — For Faraz 🩷</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .scene-panel {
+    position: relative;
+    min-height: 420px;
+    background: linear-gradient(170deg, var(--blush-100), var(--lilac-200));
+    border-radius: 26px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    border: 1px solid rgba(207,127,149,0.16);
+    margin-top: 20px;
+  }
+  .scene-deco {
+    position: absolute; font-size: 2rem; opacity: 0.5; pointer-events: none;
+  }
+  .spot {
+    position: absolute;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    background: rgba(255,255,255,0.55);
+    border: 2px dashed rgba(207,127,149,0.5);
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+  }
+  .spot:hover { transform: scale(1.12); background: rgba(255,255,255,0.85); }
+  .spot.found {
+    border-style: solid;
+    background: var(--paper);
+    box-shadow: var(--shadow-soft);
+    pointer-events: none;
+    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .spot-counter {
+    text-align: center; margin-top: 16px; font-weight: 700; color: var(--rose-700);
+  }
+
+  .scratch-wrap {
+    position: relative; max-width: 420px; margin: 30px auto 0;
+    border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-soft);
+  }
+  .scratch-under {
+    padding: 30px 24px; text-align: center;
+    background: linear-gradient(155deg, var(--gold-400), var(--rose-400));
+    min-height: 180px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scratch-under p { font-family: var(--font-script); font-size: 1.4rem; color: #fff; margin: 0; }
+  .scratch-canvas { position: absolute; inset: 0; cursor: grab; touch-action: none; }
+  .scratch-label {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--plum-800); font-weight: 700; pointer-events: none; font-size: 0.95rem; gap: 6px;
+  }
+
+  .surprise-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 18px; margin-top: 40px; }
+  .surprise-item {
+    background: var(--paper); border-radius: 18px; padding: 20px; text-align: center;
+    box-shadow: var(--shadow-soft); border: 1px solid rgba(207,127,149,0.14);
+  }
+  .surprise-item .glyph { font-size: 1.8rem; margin-bottom: 8px; display:block; }
+</style>
+</head>
+<body>
+
+<section class="page-wrap">
+  <div class="center">
+    <span class="eyebrow">page four</span>
+    <h1 class="page-title" style="margin-top:8px;">Hidden Little<br><span class="script-accent">Surprises</span></h1>
+    <p class="muted" style="max-width:460px;margin:14px auto 0;">not everything on this page is visible right away. look closely, Faraz.</p>
+  </div>
+
+  <div id="journeyHost"></div>
+  <div id="bearHost"></div>
+
+  <div class="scene-panel" id="scenePanel">
+    <span class="scene-deco" style="top:8%;left:6%;">🎈</span>
+    <span class="scene-deco" style="top:12%;right:8%;">🌸</span>
+    <span class="scene-deco" style="bottom:10%;left:12%;">✨</span>
+    <span class="scene-deco" style="bottom:14%;right:14%;">🎀</span>
+    <span class="scene-deco" style="top:44%;left:2%;">🩷</span>
+    <!-- spots injected by JS -->
+  </div>
+  <p class="spot-counter" id="spotCounter">0 / 5 found</p>
+
+  <div class="divider-heart">🎁</div>
+
+  <div class="center">
+    <span class="eyebrow">one more thing</span>
+    <h2 style="margin:8px 0 4px;">Scratch This</h2>
+    <p class="muted">drag your mouse or finger across the card</p>
+  </div>
+  <div class="scratch-wrap">
+    <div class="scratch-under"><p id="scratchMsg">You are, without question, my favorite person to love from far away. 🩷</p></div>
+    <canvas class="scratch-canvas" id="scratchCanvas"></canvas>
+    <div class="scratch-label" id="scratchLabel"><span style="font-size:1.6rem;">🎁</span><span>scratch me</span></div>
+  </div>
+
+  <div class="surprise-list">
+    <div class="surprise-item"><span class="glyph">🕯️</span><h4 style="margin:0 0 4px;">A wish, from me</h4><p class="muted" style="font-size:0.85rem;">I already made one for you today. Didn't tell you what it was. That's how it works.</p></div>
+    <div class="surprise-item"><span class="glyph">📻</span><h4 style="margin:0 0 4px;">If this had a soundtrack</h4><p class="muted" style="font-size:0.85rem;">it'd be every song that makes me think "he'd like this one."</p></div>
+    <div class="surprise-item"><span class="glyph">🗝️</span><h4 style="margin:0 0 4px;">One secret</h4><p class="muted" style="font-size:0.85rem;">I've been planning this website for longer than you think.</p></div>
+  </div>
+
+  <div id="footerNav"></div>
+</section>
+
+<script src="assets/shared.js"></script>
+<script>
+  initPage('surprises.html', { petals: 10 });
+  renderJourney(document.getElementById('journeyHost'), 'surprises.html');
+  renderBearDuo(document.getElementById('bearHost'), {
+    bubuLine: `There are 5 hidden circles in that pink box up there. Go find them!`,
+    duduLine: `I'm not telling you where they are. That's the whole point, Faraz.`
+  });
+  renderFooterNav(document.getElementById('footerNav'), 'surprises.html');
+
+  const SURPRISE_SPOTS = [
+    { top: '20%', left: '18%', glyph: '💌', msg: `A message: I re-read our old chats sometimes. Don't tell you that too often — but I do.` },
+    { top: '30%', left: '68%', glyph: '🧸', msg: `Bubu's secret: he thinks you're the best thing that's happened to me this year. He's right.` },
+    { top: '58%', left: '38%', glyph: '⭐', msg: `A wish for you: may this year bring you closer to everything (and everyone) you've been missing.` },
+    { top: '68%', left: '76%', glyph: '🎵', msg: `If I could send you one sound right now, it'd be your own laugh, played back to you.` },
+    { top: '46%', left: '10%', glyph: '🩷', msg: `The simplest truth: I love you. Very simply, very loudly, very much.` },
+  ];
+
+  const scene = document.getElementById('scenePanel');
+  const counterEl = document.getElementById('spotCounter');
+  let foundCount = 0;
+
+  SURPRISE_SPOTS.forEach((s, i) => {
+    const spot = document.createElement('div');
+    spot.className = 'spot';
+    spot.style.top = s.top;
+    spot.style.left = s.left;
+    spot.textContent = '?';
+    spot.setAttribute('aria-label', 'Hidden surprise');
+    spot.addEventListener('click', () => {
+      if (spot.classList.contains('found')) return;
+      spot.classList.add('found');
+      spot.textContent = s.glyph;
+      foundCount++;
+      counterEl.textContent = `${foundCount} / 5 found`;
+      Progress.markFound('surprise-' + i);
+      confettiBurst(26);
+      openModal(`
+        <div class="center">
+          <div style="font-size:2rem;">${s.glyph}</div>
+          <h3 style="margin:8px 0 10px;">You found one!</h3>
+          <p style="font-family:var(--font-script);font-size:1.25rem;line-height:1.5;">${s.msg}</p>
+          <button class="btn btn-primary" style="margin-top:16px;" onclick="closeModal()">💗</button>
+        </div>`);
+      if (foundCount === 5) {
+        setTimeout(() => openModal(`
+          <div class="center">
+            <div style="font-size:2.4rem;">🏆</div>
+            <h2>All five found!</h2>
+            <p class="muted" style="margin-top:8px;">You didn't miss a single one, Faraz. Of course you didn't.</p>
+            <button class="btn btn-primary" style="margin-top:14px;" onclick="closeModal()">Continue ✓</button>
+          </div>`), 900);
+      }
+    });
+    scene.appendChild(spot);
+  });
+
+  /* ---- Scratch card ---- */
+  const canvas = document.getElementById('scratchCanvas');
+  const label = document.getElementById('scratchLabel');
+  const wrap = document.querySelector('.scratch-wrap');
+  const ctx = canvas.getContext('2d');
+  let scratching = false;
+  let revealed = false;
+
+  function sizeCanvas() {
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    ctx.fillStyle = '#f6d8de';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'destination-out';
+  }
+  window.addEventListener('resize', sizeCanvas);
+  sizeCanvas();
+
+  function scratchAt(x, y) {
+    ctx.beginPath();
+    ctx.arc(x, y, 26, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx - rect.left, y: cy - rect.top };
+  }
+  function checkRevealPct() {
+    if (revealed) return;
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let cleared = 0;
+    for (let i = 3; i < data.length; i += 4 * 40) { if (data[i] === 0) cleared++; }
+    const pct = cleared / (data.length / (4 * 40));
+    if (pct > 0.55) {
+      revealed = true;
+      canvas.style.transition = 'opacity 0.6s ease';
+      canvas.style.opacity = '0';
+      label.style.opacity = '0';
+      confettiBurst(30);
+      Progress.markFound('scratch-card');
+    }
+  }
+  function startScratch(e) { scratching = true; label.style.opacity = '0.15'; const p = getPos(e); scratchAt(p.x, p.y); }
+  function moveScratch(e) { if (!scratching) return; const p = getPos(e); scratchAt(p.x, p.y); checkRevealPct(); if (e.touches) e.preventDefault(); }
+  function endScratch() { scratching = false; }
+
+  canvas.addEventListener('mousedown', startScratch);
+  canvas.addEventListener('mousemove', moveScratch);
+  window.addEventListener('mouseup', endScratch);
+  canvas.addEventListener('touchstart', startScratch, { passive: true });
+  canvas.addEventListener('touchmove', moveScratch, { passive: false });
+  canvas.addEventListener('touchend', endScratch);
+</script>
+</body>
+</html>

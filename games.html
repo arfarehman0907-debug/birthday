@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Play — For Faraz 🩷</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .game-tabs { display: flex; justify-content: center; gap: 10px; margin: 26px 0 6px; flex-wrap: wrap; }
+  .game-tab {
+    padding: 10px 22px; border-radius: var(--radius-pill); border: 2px solid var(--blush-200);
+    background: var(--paper); color: var(--rose-700); font-weight: 700; cursor: pointer; font-family: var(--font-body);
+  }
+  .game-tab.active { background: var(--rose-500); color: #fff; border-color: var(--rose-600); }
+  .game-panel { display: none; }
+  .game-panel.active { display: block; }
+
+  /* Memory match */
+  .memory-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    max-width: 440px; margin: 26px auto 0;
+  }
+  .mem-tile {
+    aspect-ratio: 1; border-radius: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem; position: relative;
+    background: linear-gradient(155deg, var(--rose-400), var(--rose-600));
+    box-shadow: var(--shadow-soft);
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.34,1.4,0.64,1);
+  }
+  .mem-tile .face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; border-radius: 14px; }
+  .mem-tile .front { background: linear-gradient(155deg, var(--rose-400), var(--rose-600)); color: #fff; font-size: 1.3rem; }
+  .mem-tile .back { background: var(--paper); transform: rotateY(180deg); border: 1px solid var(--blush-200); }
+  .mem-tile.flipped { transform: rotateY(180deg); }
+  .mem-tile.matched .back { background: var(--sage-200); }
+  .mem-tile.matched { pointer-events: none; }
+
+  .game-stats { display: flex; justify-content: center; gap: 26px; margin-top: 18px; font-size: 0.9rem; color: var(--ink-soft); }
+  .game-stats b { color: var(--plum-800); }
+  .stars-row { text-align: center; font-size: 1.5rem; margin-top: 10px; letter-spacing: 4px; }
+
+  /* Heart catch */
+  .catch-stage {
+    position: relative; max-width: 480px; height: 380px; margin: 26px auto 0;
+    background: linear-gradient(180deg, var(--blush-100), var(--sky-200));
+    border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(207,127,149,0.16);
+    touch-action: none;
+  }
+  .catch-basket {
+    position: absolute; bottom: 10px; width: 64px; height: 44px;
+    left: 50%; transform: translateX(-50%);
+    font-size: 2.2rem; user-select: none; text-align: center;
+  }
+  .falling-item { position: absolute; top: -34px; font-size: 1.6rem; user-select: none; }
+  .catch-hud {
+    position: absolute; top: 10px; left: 12px; right: 12px;
+    display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--rose-700);
+    background: rgba(255,255,255,0.7); border-radius: 12px; padding: 6px 12px; backdrop-filter: blur(4px);
+  }
+  .catch-overlay {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column;
+    background: rgba(255,250,246,0.92); text-align: center; padding: 20px;
+  }
+  .catch-overlay.show { display: flex; }
+  .catch-controls { text-align: center; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<section class="page-wrap">
+  <div class="center">
+    <span class="eyebrow">page three</span>
+    <h1 class="page-title" style="margin-top:8px;">A Little Arcade,<br><span class="script-accent">Just For You</span></h1>
+    <p class="muted" style="max-width:460px;margin:14px auto 0;">two tiny games. no pressure. just vibes and stars ⭐</p>
+  </div>
+
+  <div id="journeyHost"></div>
+  <div id="bearHost"></div>
+
+  <div class="game-tabs">
+    <button class="game-tab active" data-tab="memory">🧩 Memory Match</button>
+    <button class="game-tab" data-tab="catch">🩷 Heart Catch</button>
+  </div>
+
+  <!-- MEMORY MATCH -->
+  <div class="game-panel active" id="panel-memory">
+    <div class="panel" style="max-width:560px;margin:20px auto 0;">
+      <h3 class="center" style="margin-bottom:4px;">Match the pairs</h3>
+      <p class="center muted" style="font-size:0.85rem;">find every pair before you run out of patience 😄</p>
+      <div class="memory-grid" id="memGrid"></div>
+      <div class="game-stats">
+        <span>Moves: <b id="memMoves">0</b></span>
+        <span>Pairs: <b id="memPairs">0</b>/8</span>
+      </div>
+      <div class="stars-row" id="memStars" style="display:none;"></div>
+      <div class="center" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="memReset">Restart 🔁</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEART CATCH -->
+  <div class="game-panel" id="panel-catch">
+    <div class="panel" style="max-width:560px;margin:20px auto 0;">
+      <h3 class="center" style="margin-bottom:4px;">Catch the falling hearts</h3>
+      <p class="center muted" style="font-size:0.85rem;">move the basket with your mouse / finger — avoid the broken hearts 💔</p>
+      <div class="catch-stage" id="catchStage">
+        <div class="catch-hud"><span>Score: <b id="catchScore">0</b></span><span>Time: <b id="catchTime">20</b>s</span></div>
+        <div class="catch-basket" id="catchBasket">🧺</div>
+        <div class="catch-overlay" id="catchOverlay">
+          <h3 style="margin-bottom:6px;">Ready?</h3>
+          <p class="muted" style="max-width:280px;">Catch as many 🩷 as you can in 20 seconds. Skip the 💔!</p>
+          <button class="btn btn-primary" id="catchStart" style="margin-top:14px;">Start Game</button>
+        </div>
+      </div>
+      <div class="stars-row" id="catchStars" style="display:none;"></div>
+      <div class="catch-controls">
+        <button class="btn btn-ghost" id="catchReset" style="display:none;">Play Again 🔁</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-heart">🎮</div>
+
+  <div id="footerNav"></div>
+</section>
+
+<script src="assets/shared.js"></script>
+<script>
+  initPage('games.html', { petals: 8 });
+  renderJourney(document.getElementById('journeyHost'), 'games.html');
+  renderBearDuo(document.getElementById('bearHost'), {
+    bubuLine: `I hold the world record on memory match. Beat me, I dare you.`,
+    duduLine: `The heart catch game gets faster near the end. Stay sharp!`
+  });
+  renderFooterNav(document.getElementById('footerNav'), 'games.html');
+
+  document.querySelectorAll('.game-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ============ MEMORY MATCH ============ */
+  const MEM_SYMBOLS = ['🧸','🩷','⭐','🌸','🎂','💌','🎀','✨'];
+  let memMoves = 0, memPairsFound = 0, memFirst = null, memLock = false;
+
+  function buildMemory() {
+    const grid = document.getElementById('memGrid');
+    grid.innerHTML = '';
+    memMoves = 0; memPairsFound = 0; memFirst = null; memLock = false;
+    document.getElementById('memMoves').textContent = '0';
+    document.getElementById('memPairs').textContent = '0';
+    document.getElementById('memStars').style.display = 'none';
+
+    let deck = [...MEM_SYMBOLS, ...MEM_SYMBOLS];
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+
+    deck.forEach((sym, idx) => {
+      const tile = document.createElement('div');
+      tile.className = 'mem-tile';
+      tile.dataset.sym = sym;
+      tile.dataset.idx = idx;
+      tile.innerHTML = `
+        <div class="face front">?</div>
+        <div class="face back">${sym}</div>`;
+      tile.addEventListener('click', () => flipTile(tile));
+      grid.appendChild(tile);
+    });
+  }
+
+  function flipTile(tile) {
+    if (memLock || tile.classList.contains('flipped') || tile.classList.contains('matched')) return;
+    tile.classList.add('flipped');
+    if (!memFirst) { memFirst = tile; return; }
+
+    memMoves++;
+    document.getElementById('memMoves').textContent = memMoves;
+    memLock = true;
+
+    if (memFirst.dataset.sym === tile.dataset.sym && memFirst !== tile) {
+      memFirst.classList.add('matched');
+      tile.classList.add('matched');
+      memPairsFound++;
+      document.getElementById('memPairs').textContent = memPairsFound;
+      memFirst = null; memLock = false;
+      if (memPairsFound === 8) finishMemory();
+    } else {
+      setTimeout(() => {
+        memFirst.classList.remove('flipped');
+        tile.classList.remove('flipped');
+        memFirst = null; memLock = false;
+      }, 700);
+    }
+  }
+
+  function finishMemory() {
+    confettiBurst(50);
+    let stars = memMoves <= 12 ? 3 : memMoves <= 18 ? 2 : 1;
+    Progress.setStars('memory', stars);
+    const starsEl = document.getElementById('memStars');
+    starsEl.style.display = 'block';
+    starsEl.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    setTimeout(() => openModal(`
+      <div class="center">
+        <div style="font-size:2.4rem;">🎉</div>
+        <h2>You matched them all!</h2>
+        <p class="muted" style="margin-top:6px;">${memMoves} moves — ${'⭐'.repeat(stars)}</p>
+        <p style="font-family:var(--font-script);font-size:1.2rem;margin-top:12px;">every pair found is a pair of us, together again 🩷</p>
+        <button class="btn btn-primary" style="margin-top:14px;" onclick="closeModal()">Yay ✓</button>
+      </div>`), 400);
+  }
+
+  document.getElementById('memReset').addEventListener('click', buildMemory);
+  buildMemory();
+
+  /* ============ HEART CATCH ============ */
+  const stage = document.getElementById('catchStage');
+  const basket = document.getElementById('catchBasket');
+  const overlay = document.getElementById('catchOverlay');
+  const startBtn = document.getElementById('catchStart');
+  const resetBtn = document.getElementById('catchReset');
+  const scoreEl = document.getElementById('catchScore');
+  const timeEl = document.getElementById('catchTime');
+  const starsEl = document.getElementById('catchStars');
+
+  let catchScore = 0, catchTimeLeft = 20, catchRunning = false, catchTimerId = null, spawnId = null;
+  let basketX = 50; // percent
+
+  function moveBasketTo(clientX) {
+    const rect = stage.getBoundingClientRect();
+    let pct = ((clientX - rect.left) / rect.width) * 100;
+    pct = Math.max(6, Math.min(94, pct));
+    basketX = pct;
+    basket.style.left = pct + '%';
+  }
+  stage.addEventListener('mousemove', (e) => { if (catchRunning) moveBasketTo(e.clientX); });
+  stage.addEventListener('touchmove', (e) => {
+    if (catchRunning && e.touches[0]) { moveBasketTo(e.touches[0].clientX); e.preventDefault(); }
+  }, { passive: false });
+
+  function spawnFalling() {
+    const isBad = Math.random() < 0.28;
+    const el = document.createElement('div');
+    el.className = 'falling-item';
+    el.textContent = isBad ? '💔' : (Math.random() < 0.5 ? '🩷' : '💗');
+    const leftPct = 6 + Math.random() * 88;
+    el.style.left = leftPct + '%';
+    const duration = 2.6 + Math.random() * 1.6;
+    el.style.transition = `top ${duration}s linear`;
+    stage.appendChild(el);
+    requestAnimationFrame(() => { el.style.top = '340px'; });
+
+    let caught = false;
+    const checkCatch = setInterval(() => {
+      if (!catchRunning) { clearInterval(checkCatch); el.remove(); return; }
+      const elTop = parseFloat(el.style.top) || 0;
+      if (elTop > 290 && elTop < 340) {
+        const diff = Math.abs(parseFloat(el.style.left) - basketX);
+        if (diff < 10) {
+          caught = true;
+          clearInterval(checkCatch);
+          el.remove();
+          if (isBad) { catchScore = Math.max(0, catchScore - 2); }
+          else { catchScore += 1; }
+          scoreEl.textContent = catchScore;
+        }
+      }
+    }, 60);
+
+    setTimeout(() => {
+      clearInterval(checkCatch);
+      if (!caught) el.remove();
+    }, duration * 1000 + 100);
+  }
+
+  function startCatch() {
+    catchScore = 0; catchTimeLeft = 20; catchRunning = true;
+    scoreEl.textContent = '0'; timeEl.textContent = '20';
+    overlay.classList.remove('show');
+    starsEl.style.display = 'none';
+    resetBtn.style.display = 'none';
+    document.querySelectorAll('.falling-item').forEach(e => e.remove());
+
+    spawnId = setInterval(spawnFalling, 550);
+    catchTimerId = setInterval(() => {
+      catchTimeLeft--;
+      timeEl.textContent = catchTimeLeft;
+      if (catchTimeLeft <= 0) endCatch();
+    }, 1000);
+  }
+
+  function endCatch() {
+    catchRunning = false;
+    clearInterval(spawnId);
+    clearInterval(catchTimerId);
+    document.querySelectorAll('.falling-item').forEach(e => e.remove());
+    let stars = catchScore >= 16 ? 3 : catchScore >= 9 ? 2 : catchScore >= 3 ? 1 : 0;
+    Progress.setStars('catch', stars);
+    confettiBurst(40);
+    starsEl.style.display = 'block';
+    starsEl.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    resetBtn.style.display = 'inline-flex';
+    overlay.innerHTML = `
+      <h3 style="margin-bottom:6px;">Time's up! 🩷</h3>
+      <p class="muted">Final score: <b>${catchScore}</b></p>
+      <p style="font-family:var(--font-script);font-size:1.15rem;margin-top:10px;max-width:280px;">every heart you caught is one I sent from far away</p>
+      <button class="btn btn-primary" id="catchStartAgain" style="margin-top:14px;">Play Again</button>`;
+    overlay.classList.add('show');
+    document.getElementById('catchStartAgain').addEventListener('click', startCatch);
+  }
+
+  startBtn.addEventListener('click', startCatch);
+  resetBtn.addEventListener('click', startCatch);
+</script>
+</body>
+</html>

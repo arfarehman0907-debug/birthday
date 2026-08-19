@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Notes — For Faraz 🩷</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 26px;
+    margin-top: 20px;
+  }
+  .flip-card { perspective: 1200px; height: 230px; cursor: pointer; }
+  .flip-inner {
+    position: relative; width: 100%; height: 100%;
+    transition: transform 0.7s cubic-bezier(0.34,1.4,0.64,1);
+    transform-style: preserve-3d;
+  }
+  .flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+  .flip-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+  }
+  .flip-front {
+    background: linear-gradient(155deg, var(--rose-400), var(--rose-600));
+    color: #fff;
+  }
+  .flip-front .glyph { font-size: 2.2rem; margin-bottom: 10px; }
+  .flip-front .lbl { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.03em; }
+  .flip-front .sub { font-size: 0.74rem; opacity: 0.85; margin-top: 4px; }
+  .flip-back {
+    background: var(--paper);
+    transform: rotateY(180deg);
+    border: 1px solid rgba(207,127,149,0.18);
+  }
+  .flip-back p { font-family: var(--font-script); font-size: 1.18rem; line-height: 1.42; color: var(--plum-800); margin: 0; }
+
+  .letter-panel { margin-top: 50px; }
+  .letter-body {
+    font-family: var(--font-script);
+    font-size: 1.3rem;
+    line-height: 1.75;
+    color: var(--plum-800);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .letter-sign { text-align: right; margin-top: 18px; font-size: 1.5rem; color: var(--rose-600); }
+
+  .hidden-heart-area { position: relative; height: 60px; margin-top: 8px; }
+  .tiny-hidden {
+    position: absolute; font-size: 1.4rem; cursor: pointer; opacity: 0.16;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .tiny-hidden:hover { opacity: 0.5; }
+  .tiny-hidden.found { opacity: 1; animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+</style>
+</head>
+<body>
+
+<section class="page-wrap">
+  <div class="center">
+    <span class="eyebrow">page two</span>
+    <h1 class="page-title" style="margin-top:8px;">Notes I've Been<br><span class="script-accent">Saving For You</span></h1>
+    <p class="muted" style="max-width:480px;margin:14px auto 0;">tap each card — every one flips into something I actually mean</p>
+  </div>
+
+  <div id="journeyHost"></div>
+  <div id="bearHost"></div>
+
+  <div class="notes-grid" id="notesGrid"></div>
+
+  <div class="panel letter-panel">
+    <span class="eyebrow">a longer one</span>
+    <h2 style="margin:10px 0 22px;">If I Could Say One More Thing</h2>
+    <p class="letter-body">
+      Faraz, some days the distance feels like nothing and some days it feels like everything —
+      but on your birthday I wanted it to feel like <em>nothing</em> for a little while.
+      So here you are, on a website I built with more care than I've put into most things
+      in my life. Every silly detail on this page is a small proof that you're thought of,
+      constantly, from wherever I am.
+    </p>
+    <p class="letter-body" style="margin-top:16px;">
+      I hope this year gives you everything you deserve — and I hope, more than anything,
+      that the distance closes soon. Until then, take this. It's yours.
+    </p>
+    <div class="letter-sign script">with all my love — always yours</div>
+  </div>
+
+  <div class="divider-heart">🩷</div>
+  <p class="center muted" style="font-size:0.8rem;">psst — there's one tiny heart hiding somewhere on this page. find it.</p>
+  <div class="hidden-heart-area" id="hiddenArea"></div>
+
+  <div id="footerNav"></div>
+</section>
+
+<script src="assets/shared.js"></script>
+<script>
+  initPage('notes.html', { petals: 10 });
+  renderJourney(document.getElementById('journeyHost'), 'notes.html');
+  renderBearDuo(document.getElementById('bearHost'), {
+    bubuLine: `Every note here is 100% real, no cap. He wrote them himself.`,
+    duduLine: `Flip the cards, Faraz. Don't just stare at them!`
+  });
+  renderFooterNav(document.getElementById('footerNav'), 'notes.html');
+
+  const NOTES = [
+    { glyph: '🌅', label: 'On mornings', sub: 'tap to read', text: 'The first thing I think of most mornings is you — even before my coffee, which is saying a lot.' },
+    { glyph: '📏', label: 'On distance', sub: 'tap to read', text: 'Distance is just proof that what we have is strong enough to stretch this far without breaking.' },
+    { glyph: '😂', label: 'On your laugh', sub: 'tap to read', text: 'Your laugh is genuinely my favorite sound. I would build a hundred websites just to hear it once.' },
+    { glyph: '🎂', label: 'On today', sub: 'tap to read', text: 'Happy birthday to the person who makes ordinary days feel like something worth celebrating.' },
+    { glyph: '🌙', label: 'On late nights', sub: 'tap to read', text: 'Every "goodnight, miss you" text means more than you know. I mean it every single time.' },
+    { glyph: '💭', label: 'On the future', sub: 'tap to read', text: 'I think about the day the distance disappears more than I think about almost anything else.' },
+  ];
+
+  const grid = document.getElementById('notesGrid');
+  NOTES.forEach((n, i) => {
+    const card = document.createElement('div');
+    card.className = 'flip-card';
+    card.innerHTML = `
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <div class="glyph">${n.glyph}</div>
+          <div class="lbl">${n.label}</div>
+          <div class="sub">${n.sub}</div>
+        </div>
+        <div class="flip-face flip-back"><p>${n.text}</p></div>
+      </div>`;
+    card.addEventListener('click', () => card.classList.toggle('flipped'));
+    grid.appendChild(card);
+  });
+
+  // tiny hidden heart easter egg
+  const hiddenArea = document.getElementById('hiddenArea');
+  const heart = document.createElement('div');
+  heart.className = 'tiny-hidden';
+  heart.textContent = '🩷';
+  heart.style.left = (20 + Math.random() * 60) + '%';
+  heart.style.top = '10px';
+  hiddenArea.appendChild(heart);
+  heart.addEventListener('click', () => {
+    if (heart.classList.contains('found')) return;
+    heart.classList.add('found');
+    Progress.markFound('notes-heart');
+    confettiBurst(24);
+    openModal(`
+      <div class="center">
+        <div style="font-size:2.4rem;margin-bottom:8px;">🩷</div>
+        <h2>Found it!</h2>
+        <p class="muted" style="margin-top:8px;">Small hearts are hidden all over this site, Faraz — just like you're hidden in every part of my day.</p>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="closeModal()">Aww ✓</button>
+      </div>`);
+  });
+</script>
+</body>
+</html>
